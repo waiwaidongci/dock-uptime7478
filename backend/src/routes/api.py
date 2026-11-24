@@ -6,9 +6,27 @@ from src.config.settings import ARTIFACTS
 from src.constants.enums import Role
 from src.controllers.query import delivery_status, jobs, recent_activity, require_row, revisions
 from src.models.tables import datasets, runs
-from src.schemas.requests import Delivery, Import, Login, Review, Run
+from src.schemas.requests import (
+    AmendmentImport,
+    Delivery,
+    Import,
+    Login,
+    ReissueReview,
+    Review,
+    Run,
+)
 from src.services.data import PROFILE, csv_records, save_revision
-from src.services.domain import sample_rows
+from src.services.domain import sample_amendments, sample_rows
+from src.services.reissues import (
+    get_reissue,
+    import_amendments,
+    list_amendments,
+    list_reissues,
+    month_versions,
+    retry_reissue,
+    review_reissue,
+    version_report,
+)
 from src.services.workflow import add_run, cancel_schedule, review_run, schedule_report
 from src.utils.exports import write_csv
 from src.utils.security import allowed, authenticate, signed_in
@@ -43,6 +61,12 @@ def example(account=Depends(signed_in)):
     return download_csv(write_csv(sample_rows(), [c['key'] for c in PROFILE['columns']], False), PROFILE['filename'])
 
 
+@router.get('/amendments/example.csv')
+def amendment_example(account=Depends(signed_in)):
+    name = 'ningbo-dock-amendments-example.csv'
+    return download_csv(write_csv(sample_amendments(), [c['key'] for c in PROFILE['amendment_columns']], False), name)
+
+
 @router.get('/datasets')
 def list_datasets(account=Depends(signed_in)):
     return revisions()
@@ -60,6 +84,49 @@ def import_data(body: Import, account=Depends(analyst)):
     rows = csv_records(body.csv)
     key, created = save_revision(body.name, rows, account['username'])
     return {'id': key, 'created': created, 'rows': len(rows)}
+
+
+@router.get('/amendments')
+def amendments(account=Depends(signed_in)):
+    return list_amendments()
+
+
+@router.post('/amendments', status_code=201)
+def upload_amendments(body: AmendmentImport, account=Depends(analyst)):
+    return import_amendments(body.csv, account['username'])
+
+
+@router.get('/reissues')
+def reissues(account=Depends(signed_in)):
+    return list_reissues()
+
+
+@router.get('/reissues/{key}')
+def reissue_detail(key: int, account=Depends(signed_in)):
+    return get_reissue(key)
+
+
+@router.post('/reissues/{key}/retry', status_code=202)
+def reissue_retry(key: int, account=Depends(analyst)):
+    return retry_reissue(key, account['username'])
+
+
+@router.post('/reissues/{key}/review')
+def reissue_review(key: int, body: ReissueReview, account=Depends(reviewer)):
+    return review_reissue(key, body, account['username'])
+
+
+@router.get('/reports/months/{month}/versions')
+def report_versions(month: str, account=Depends(signed_in)):
+    return month_versions(month)
+
+
+@router.get('/reports/versions/{version_id}/report.csv')
+def versioned_report(version_id: int, account=Depends(signed_in)):
+    version, run = version_report(version_id)
+    path = ARTIFACTS / f"run-{run['id']}-{run['started'].hex()}.csv"
+    data = path.read_bytes() if path.exists() else write_csv(run['result']['rows'], run['result'].get('columns'))
+    return download_csv(data, f"{PROFILE['title']}-{version['month']}-v{version['version_no']}.csv")
 
 
 @router.get('/runs')

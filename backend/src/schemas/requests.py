@@ -14,6 +14,15 @@ class Import(BaseModel):
     csv: str = Field(min_length=1, max_length=1_000_000)
 
 
+class AmendmentImport(BaseModel):
+    csv: str = Field(min_length=1, max_length=1_000_000)
+
+
+class ReissueReview(BaseModel):
+    decision: Literal['approved', 'returned']
+    note: str = Field(min_length=2, max_length=1000)
+
+
 class Run(BaseModel):
     dataset_id: int = Field(gt=0)
     options: dict = Field(default_factory=dict)

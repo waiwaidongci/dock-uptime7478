@@ -264,3 +264,25 @@ def sample_rows() -> list[dict]:
     ):
         add(dock, kind, record_id, datetime.fromisoformat(start), datetime.fromisoformat(end))
     return rows
+
+
+def sample_amendments() -> list[dict]:
+    """月报寄出后维修班补报的修订样例，覆盖改期、撤销、跨月与乱序规则。
+
+    撤销终态与「旧单补送不能恢复」的演示见修订页的二次导入提示：
+    对已撤销的 U-1014-03 再提交同号或更低号的改期会被系统拒收。
+    """
+    return [
+        # D02 的 3 小时非计划停机改到 11 月 2 日：10 月与 11 月都受影响
+        {'dock': 'D02', 'kind': UNPLANNED, 'record_id': 'U-1019-01', 'revision_no': 2,
+         'action': '改期', 'start': '2026-11-02 09:30:00', 'end': '2026-11-02 12:30:00'},
+        # 同单号修订号 1 乱序晚到，低于修订号 2，应被忽略
+        {'dock': 'D02', 'kind': UNPLANNED, 'record_id': 'U-1019-01', 'revision_no': 1,
+         'action': '改期', 'start': '2026-10-19 11:00:00', 'end': '2026-10-19 14:00:00'},
+        # D01 班外停机撤销，后续若补送同号改期将被拒收（撤销为终态）
+        {'dock': 'D01', 'kind': UNPLANNED, 'record_id': 'U-1014-03', 'revision_no': 1,
+         'action': '撤销', 'start': '', 'end': ''},
+        # D03 跨月非计划停机改期，整体移入 11 月，10 月须重算扣减
+        {'dock': 'D03', 'kind': UNPLANNED, 'record_id': 'U-1031-01', 'revision_no': 3,
+         'action': '改期', 'start': '2026-11-01 09:00:00', 'end': '2026-11-01 09:40:00'},
+    ]
