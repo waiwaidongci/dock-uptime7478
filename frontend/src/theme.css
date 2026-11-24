@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&family=STIX+Two+Text&display=swap');
+:root {
+  --text-font: 'Geist'; --title-font: 'STIX Two Text';
+  --paper: oklch(.975 .012 209); --surface: oklch(.994 .006 209);
+  --ink: oklch(.235 .035 209); --quiet: oklch(.435 .038 209);
+  --stripe: oklch(.961 .014 209); --rule: oklch(.858 .024 209);
+  --accent: oklch(.445 0.084 209); --button-ink: oklch(.98 .007 209);
+  --focus: oklch(.64 0.084 209);
+  --side: oklch(.923 .029 209);
+  --side-ink: oklch(.255 .033 209);
+  --highlight: oklch(.866 .045 209);
+  --highlight-edge: oklch(.49 .10 209);
+  --side-width: 286px; --side-pad: 1.25rem;
+  --login-ratio: 2.0300000000000002fr; --report-stripe: 5px;
+}
